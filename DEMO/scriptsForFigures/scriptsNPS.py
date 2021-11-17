@@ -38,11 +38,25 @@ def radial_profile(data, center):
     Outputs:
         * None.
 """
-def compute_NPS_images(dataset_path, cnn, which_cnn, pltColor, fig, axs, qdctOnly=False):
-    # Reading the ground-truth and number of slices
-    with h5py.File(dataset_path, 'r') as f:
+def compute_NPS_images(
+    dataNPS_0, dataNPS_1, dataNPS_2, dataNPS_3, dataNPS_4,
+    cnn, which_cnn, pltColor, fig, axs, qdctOnly=False):
+    
+    Ns = 50
+    qdct = np.zeros((512,50,512)) 
+    
+    # We have 50 noise reealizations to compute the NPS
+    with h5py.File(dataNPS_0, 'r') as f:
         gt =  f["gt"][:]
-        Ns = f["qdct"][:,:,:].shape[1]
+        qdct[:,0:10,:] = f["qdct"][:]   
+    with h5py.File(dataNPS_1, 'r') as f:
+        qdct[:,10:20,:] = f["qdct"][:]
+    with h5py.File(dataNPS_2, 'r') as f:
+        qdct[:,20:30,:] = f["qdct"][:]
+    with h5py.File(dataNPS_3, 'r') as f:
+        qdct[:,30:40,:] = f["qdct"][:]
+    with h5py.File(dataNPS_4, 'r') as f:
+        qdct[:,40:50,:] = f["qdct"][:]
     s=gt.shape
 
     # Computing estimate of NPS
@@ -51,20 +65,17 @@ def compute_NPS_images(dataset_path, cnn, which_cnn, pltColor, fig, axs, qdctOnl
     nps_cnn = np.zeros(s)
     nps_qdct = np.zeros(s)
     for i in np.arange(Ns):
-        with h5py.File(dataset_path, 'r') as f:
-            qdct = f["qdct"][:,i,:]
-
         # Evaluating scan
         with torch.no_grad():
             ofs = 128
             if not qdctOnly:
-                inp = torch.from_numpy(qdct).view(1,1,s[0],s[1]).float().cuda()
+                inp = torch.from_numpy(qdct[:,i,:]).view(1,1,s[0],s[1]).float().cuda()
                 inpp = F.pad(inp,(ofs,ofs,ofs,ofs),"reflect")
                 res = cnn( inpp  )[0,0,ofs:-ofs,ofs:-ofs].cpu().detach().numpy()
-                var_cnn += (res - qdct)**2/Ns
+                var_cnn += (res - qdct[:,i,:])**2/Ns
                 nps_cnn += np.absolute(fftshift(fft2(res-gt)))**2/(Ns*s[0]*s[1])
-            var_qdct += (qdct - gt)**2/Ns
-            nps_qdct += np.absolute(fftshift(fft2(qdct-gt)))**2/(Ns*s[0]*s[1])
+            var_qdct += (qdct[:,i,:] - gt)**2/Ns
+            nps_qdct += np.absolute(fftshift(fft2(qdct[:,i,:]-gt)))**2/(Ns*s[0]*s[1])
 
     # Radial profile of NPS
     if not qdctOnly:
@@ -111,16 +122,27 @@ def compute_NPS_images(dataset_path, cnn, which_cnn, pltColor, fig, axs, qdctOnl
     Outputs:
         * None.
 """
-def npsOfTestedCNNs(dataNPS, dhsn1, dhsn2, fbp, red):
+def npsOfTestedCNNs(dataNPS_0, dataNPS_1, dataNPS_2, dataNPS_3, dataNPS_4,
+                     dhsn1, dhsn2, fbp, red):
     # Generating figure
     fig, axs = plt.subplots(nrows=5, ncols=3,figsize=(8,16.0))
     
     # Each row of the figure is a different CNN
-    compute_NPS_images(dataNPS, "   ", "     ", " ", fig, [axs[0,0], axs[0,1], axs[0,2]], True)
-    compute_NPS_images(dataNPS, dhsn1, "DHSN1", "m", fig, [axs[1,0], axs[1,1], axs[1,2]])
-    compute_NPS_images(dataNPS, dhsn2, "DHSN2", "b", fig, [axs[2,0], axs[2,1], axs[2,2]])
-    compute_NPS_images(dataNPS, fbp,   "FBP",   "c", fig, [axs[3,0], axs[3,1], axs[3,2]])
-    compute_NPS_images(dataNPS, red,   "RED",   "r", fig, [axs[4,0], axs[4,1], axs[4,2]])
+    compute_NPS_images(
+        dataNPS_0, dataNPS_1, dataNPS_2, dataNPS_3, dataNPS_4, 
+        "   ", "     ", " ", fig, [axs[0,0], axs[0,1], axs[0,2]], True)
+    compute_NPS_images(
+        dataNPS_0, dataNPS_1, dataNPS_2, dataNPS_3, dataNPS_4, 
+        dhsn1, "DHSN1", "m", fig, [axs[1,0], axs[1,1], axs[1,2]])
+    compute_NPS_images(
+        dataNPS_0, dataNPS_1, dataNPS_2, dataNPS_3, dataNPS_4, 
+        dhsn2, "DHSN2", "b", fig, [axs[2,0], axs[2,1], axs[2,2]])
+    compute_NPS_images(
+        dataNPS_0, dataNPS_1, dataNPS_2, dataNPS_3, dataNPS_4, 
+        fbp,   "FBP",   "c", fig, [axs[3,0], axs[3,1], axs[3,2]])
+    compute_NPS_images(
+        dataNPS_0, dataNPS_1, dataNPS_2, dataNPS_3, dataNPS_4, 
+        red,   "RED",   "r", fig, [axs[4,0], axs[4,1], axs[4,2]])
     
     # Displaying
     plt.subplots_adjust(left=0.1,
