@@ -6,10 +6,8 @@ The notebooks within DEMO are tyhe following:
 * DEMO_iterativeReconstruction.ipynb
 * DEMO_NPS.ipynb
 
-Furthermore, we captured the python environment of the cpompuiter we used in 
+Furthermore, we captured the python environment of the computer we used in 
 * environment_demo.yml
-
-At the moment, the noise power spectrum demo is missing one of the data files due to GitHub's filsesize limit. I am working on a solution to fix this.
 
 For the iterative reconstruction demo, the ASTRA toolbox V2.0 is required (https://www.astra-toolbox.com/) in the same environment where Pytorch is installed. We found a bit challenging to have both libraries installed and in our case, installing ASTRA from the source was needed.
 
