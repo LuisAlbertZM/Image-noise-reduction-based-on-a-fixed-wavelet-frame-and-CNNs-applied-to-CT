@@ -1,5 +1,5 @@
 # denoising-w-frame-and-CNN-for-CT
-This repository contains the CNNs used in the paper " Image noise reduction based on a fixed wavelet frame and CNNs applied to CT" that publised in IEEE's Transactions on Image Processing.
+This repository contains the CNNs used in the paper " Image noise reduction based on a fixed wavelet frame and CNNs applied to CT" that is publised in IEEE's Transactions on Image Processing.
 
 The notebooks within DEMO are tyhe following:
 * DEMO_directNoiseReduction.ipynb
